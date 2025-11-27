@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Dispatch, SetStateAction } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -10,13 +10,19 @@ import PartnershipsPage from './pages/Partnerships';
 import { Toaster } from 'sonner';
 import Header from './components/Header';
 
+// Since Sidebar.tsx is not properly typed, we can create a typed wrapper for it here.
+const TypedSidebar = Sidebar as React.FC<{ 
+  sidebarOpen: boolean;
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
+}>;
+
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <Router>
       <div className='flex bg-gray-100 min-h-screen'>
-        <Sidebar setSidebarOpen={setSidebarOpen} />
+        <TypedSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         <div className='flex-1 flex flex-col'>
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           <main className='flex-1 p-4 md:p-6'>
