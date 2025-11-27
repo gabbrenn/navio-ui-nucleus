@@ -39,9 +39,9 @@ export default function RiskIndicator() {
   };
 
   return (
-    <div className='flex-1 space-y-4 p-4 md:p-8 pt-6'>
+    <div className='space-y-4'>
       <div className='max-w-2xl mx-auto'>
-        <h1 className='text-3xl font-bold mb-6'>Violence Risk Indicators (Non-identifying)</h1>
+        <h1 className='text-2xl md:text-3xl font-bold mb-6'>Violence Risk Indicators (Non-identifying)</h1>
         <p className='text-muted-foreground mb-8'>Your privacy is important. All information shared is anonymous and helps us improve safety for everyone.</p>
         
         <form onSubmit={handleSubmit} className='space-y-8'>
@@ -98,7 +98,7 @@ export default function RiskIndicator() {
 
           <div className='space-y-2'>
             <label className='text-sm font-medium'>How safe do you feel online?</label>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2'>
               <span className='text-muted-foreground'>Not Safe</span>
               {[1, 2, 3, 4, 5].map((rating) => (
                 <button

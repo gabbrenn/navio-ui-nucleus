@@ -21,9 +21,9 @@ export default function AIAnalyzer() {
   };
 
   return (
-    <div className='flex-1 space-y-4 p-4 md:p-8 pt-6'>
+    <div className='space-y-4'>
       <div className='max-w-2xl mx-auto'>
-        <div className='mt-12 pt-8'>
+        <div className='pt-8'>
           <h2 className='text-2xl font-bold mb-4'>AI Safety Analyzer</h2>
           <p className='text-muted-foreground mb-4'>Paste a suspicious message to get a quick safety analysis. This tool is a simple guide and not a replacement for careful judgment.</p>
           <div className='space-y-4'>

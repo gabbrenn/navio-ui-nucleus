@@ -1,34 +1,39 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { Sidebar, MobileNav } from './components/Sidebar';
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import RiskIndicator from './pages/RiskIndicator';
 import AIAnalyzer from './pages/AIAnalyzer';
-import PanicInfo from './pages/PanicInfo'; // Import the new page
+import PanicInfo from './pages/PanicInfo';
+import Lessons from './pages/Lessons';
+import PartnershipsPage from './pages/Partnerships';
+import { Toaster } from 'sonner';
+import Header from './components/Header';
 
-export default function App() {
+function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <Router>
-      <Toaster />
-      <div className='grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]'>
-        <Sidebar />
-        <div className='flex flex-col'>
-          <header className='flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6'>
-            <MobileNav />
-            <div className='w-full flex-1'>
-              {/* Add nav items here if needed */}
-            </div>
-          </header>
-          <main className='flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
+      <div className='flex bg-gray-100 min-h-screen'>
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className='flex-1 flex flex-col'>
+          <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <main className='flex-1 p-4 md:p-6'>
             <Routes>
               <Route path='/' element={<Dashboard />} />
               <Route path='/risk-indicator' element={<RiskIndicator />} />
               <Route path='/ai-analyzer' element={<AIAnalyzer />} />
-              <Route path='/panic-info' element={<PanicInfo />} /> {/* Add the new route */}
+              <Route path='/panic-info' element={<PanicInfo />} />
+              <Route path='/lessons' element={<Lessons />} />
+              <Route path='/partnerships' element={<PartnershipsPage />} />
             </Routes>
           </main>
         </div>
       </div>
+      <Toaster />
     </Router>
   );
 }
+
+export default App;

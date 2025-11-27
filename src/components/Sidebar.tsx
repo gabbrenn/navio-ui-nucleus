@@ -1,70 +1,51 @@
-import { NavLink } from 'react-router-dom';
-import { Home, BookOpen, PanelLeft, ShieldCheck, ShieldAlert } from 'lucide-react'; // Import ShieldAlert
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Shield, BrainCircuit, HeartPulse, BookOpen, Handshake, X } from 'lucide-react';
 
-const navItems = [
-  { label: 'Dashboard', to: '/', icon: <Home className='h-5 w-5' /> },
-  { label: 'Risk Indicator', to: '/risk-indicator', icon: <BookOpen className='h-5 w-5' /> },
-  { label: 'AI Analyzer', to: '/ai-analyzer', icon: <ShieldCheck className='h-5 w-5' /> },
-  { label: 'Panic Info', to: '/panic-info', icon: <ShieldAlert className='h-5 w-5' /> }, // Add new nav item
+const navLinks = [
+  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/risk-indicator', label: 'Risk Indicator', icon: Shield },
+  { href: '/ai-analyzer', label: 'AI Analyzer', icon: BrainCircuit },
+  { href: '/panic-info', label: 'Panic Info', icon: HeartPulse },
+  { href: '/lessons', label: 'Lessons', icon: BookOpen },
+  { href: '/partnerships', label: 'Partnerships', icon: Handshake },
 ];
 
-function NavLinks() {
-  return (
-    <nav className='grid items-start gap-2 text-sm font-medium'>
-      {navItems.map(({ label, to, icon }) => (
-        <NavLink
-          key={label}
-          to={to}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${isActive ? 'bg-muted text-primary' : ''}`
-          }
-        >
-          {icon}
-          {label}
-        </NavLink>
-      ))}
-    </nav>
-  );
-}
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
+  const location = useLocation();
 
-export function Sidebar() {
   return (
-    <div className='hidden border-r bg-muted/40 md:block'>
-      <div className='flex h-full max-h-screen flex-col gap-2'>
-        <div className='flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'>
-          <NavLink to='/' className='flex items-center gap-2 font-semibold'>
-            <BookOpen className='h-6 w-6' />
-            <span className=''>Navio</span>
-          </NavLink>
-        </div>
-        <div className='flex-1'>
-          <NavLinks />
-        </div>
+    <aside
+      className={`bg-white shadow-md flex flex-col transition-all duration-300 ease-in-out z-30 md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 fixed md:static h-full`}>
+      <div className='p-6 text-center flex justify-between items-center'>
+        <h1 className='text-2xl font-bold text-gray-800'>Navio</h1>
+        <button onClick={() => setSidebarOpen(false)} className='md:hidden text-gray-600 hover:text-gray-800'>
+          <X size={24} />
+        </button>
       </div>
-    </div>
+      <nav className='flex-1 px-4 py-2'>
+        <ul>
+          {navLinks.map(({ href, label, icon: Icon }) => {
+            const isActive = location.pathname === href;
+            return (
+              <li key={href}>
+                <Link
+                  to={href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center px-4 py-3 my-1 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}>
+                  <Icon className='w-5 h-5 mr-3' />
+                  <span className='font-medium'>{label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </aside>
   );
-}
+};
 
-export function MobileNav() {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant='outline' size='icon' className='shrink-0 md:hidden'>
-          <PanelLeft className='h-5 w-5' />
-          <span className='sr-only'>Toggle navigation menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side='left' className='flex flex-col'>
-        <div className='flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6'>
-            <NavLink to='/' className='flex items-center gap-2 font-semibold'>
-                <BookOpen className='h-6 w-6' />
-                <span className=''>Navio</span>
-            </NavLink>
-        </div>
-        <NavLinks />
-      </SheetContent>
-    </Sheet>
-  );
-}
+export default Sidebar;
