@@ -5,12 +5,14 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
+import { Spinner } from './ui/spinner';
 
 interface CampaignFormProps {
   onSubmit?: (data: any) => void;
 }
 
 const CampaignForm = ({ onSubmit }: CampaignFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -101,11 +103,19 @@ const CampaignForm = ({ onSubmit }: CampaignFormProps) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Campaign submitted:', formData);
-    if (onSubmit) {
-      onSubmit(formData);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit(formData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -361,8 +371,19 @@ const CampaignForm = ({ onSubmit }: CampaignFormProps) => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg">
-          Launch Campaign
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner className="w-4 h-4" />
+              Launching...
+            </span>
+          ) : (
+            'Launch Campaign'
+          )}
         </Button>
       </form>
     </div>

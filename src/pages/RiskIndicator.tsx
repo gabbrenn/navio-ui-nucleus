@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
+import { riskApi } from '@/lib/api/risk';
 
 export default function RiskIndicator() {
   const [formData, setFormData] = useState({
@@ -10,32 +12,49 @@ export default function RiskIndicator() {
     escalatingRisk: '',
     canBlockReport: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
-  const handleSafetyFeelingChange = (rating) => {
+  const handleSafetyFeelingChange = (rating: number) => {
     setFormData((prev) => ({ ...prev, safetyFeeling: rating }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Violence Risk Indicators Data:', formData);
-    toast.success('Your feedback has been submitted successfully.');
-    // Reset form
-    setFormData({
-      digitalHarm: '',
-      platform: '',
-      frequency: '',
-      safetyFeeling: 3,
-      escalatingRisk: '',
-      canBlockReport: false,
-    });
+    setIsSubmitting(true);
+    try {
+      await riskApi.submit({
+        digital_harm: formData.digitalHarm || undefined,
+        platform: formData.platform || undefined,
+        frequency: formData.frequency || undefined,
+        safety_feeling: formData.safetyFeeling,
+        escalating_risk: formData.escalatingRisk || undefined,
+        can_block_report: formData.canBlockReport,
+      });
+      toast.success('Your feedback has been submitted successfully.');
+      // Reset form
+      setFormData({
+        digitalHarm: '',
+        platform: '',
+        frequency: '',
+        safetyFeeling: 3,
+        escalatingRisk: '',
+        canBlockReport: false,
+      });
+    } catch (error) {
+      console.error('Risk assessment submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -144,8 +163,19 @@ export default function RiskIndicator() {
           </div>
 
           <div>
-            <button type='submit' className='w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-md hover:bg-primary/90 transition-colors'>
-              Submit Anonymously
+            <button 
+              type='submit' 
+              disabled={isSubmitting}
+              className='w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner className="w-4 h-4" />
+                  Submitting...
+                </span>
+              ) : (
+                'Submit Anonymously'
+              )}
             </button>
           </div>
         </form>

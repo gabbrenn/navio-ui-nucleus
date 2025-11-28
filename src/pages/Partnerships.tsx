@@ -1,18 +1,81 @@
 import { useState } from 'react';
 import { ShieldCheck, MessageCircle, Megaphone } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import TipForm from '@/components/TipForm';
 import CampaignForm from '@/components/CampaignForm';
 import SessionForm from '@/components/SessionForm';
+import { tipsApi } from '@/lib/api/tips';
+import { campaignsApi } from '@/lib/api/campaigns';
+import { sessionsApi } from '@/lib/api/sessions';
 
 const PartnershipsPage = () => {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFormSubmit = (type: string, data: any) => {
-    console.log(`${type} submitted:`, data);
-    setActiveDialog(null);
-    // Handle form submission logic here
+  const handleFormSubmit = async (type: string, data: Record<string, unknown>) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      switch (type) {
+        case 'tip':
+          await tipsApi.create({
+            title: data.title as string,
+            category: data.category as string,
+            content: data.content as string,
+            target_audience: data.targetAudience as string,
+            priority: data.priority as string,
+            estimated_impact: data.estimatedImpact as string,
+            tags: (data.tags as string[]) || [],
+          });
+          toast.success('Safety tip submitted successfully!');
+          break;
+        case 'campaign':
+          await campaignsApi.create({
+            title: data.title as string,
+            description: data.description as string,
+            campaign_type: data.campaignType as string,
+            target_audience: data.targetAudience as string,
+            start_date: data.startDate as string,
+            end_date: data.endDate as string,
+            platforms: (data.platforms as string[]) || [],
+            budget: data.budget as string,
+            goals: data.goals as string,
+            kpis: (data.kpis as string[]) || [],
+            keywords: (data.keywords as string[]) || [],
+          });
+          toast.success('Campaign created successfully!');
+          break;
+        case 'session':
+          await sessionsApi.create({
+            title: data.title as string,
+            description: data.description as string,
+            session_type: data.sessionType as string,
+            topic: data.topic as string,
+            max_participants: data.maxParticipants ? parseInt(data.maxParticipants as string) : undefined,
+            duration: data.duration as string,
+            scheduled_date: data.scheduledDate as string,
+            scheduled_time: data.scheduledTime as string,
+            facilitator: data.facilitator as string,
+            target_audience: data.targetAudience as string,
+            expected_outcomes: data.expectedOutcomes as string,
+            engagement_metrics: (data.engagementMetrics as string[]) || [],
+            resources: (data.resources as string[]) || [],
+            tags: (data.tags as string[]) || [],
+          });
+          toast.success('Session scheduled successfully!');
+          break;
+        default:
+          toast.error('Unknown form type');
+      }
+      setActiveDialog(null);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit form. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

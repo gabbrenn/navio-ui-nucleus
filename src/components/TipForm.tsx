@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
+import { Spinner } from './ui/spinner';
 
 interface TipFormProps {
   onSubmit?: (data: any) => void;
@@ -22,6 +23,7 @@ const TipForm = ({ onSubmit }: TipFormProps) => {
   });
   
   const [tagInput, setTagInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
     'Personal Safety',
@@ -60,11 +62,19 @@ const TipForm = ({ onSubmit }: TipFormProps) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Tip submitted:', formData);
-    if (onSubmit) {
-      onSubmit(formData);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit(formData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -224,8 +234,19 @@ const TipForm = ({ onSubmit }: TipFormProps) => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg">
-          Submit Safety Tip
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner className="w-4 h-4" />
+              Submitting...
+            </span>
+          ) : (
+            'Submit Safety Tip'
+          )}
         </Button>
       </form>
     </div>

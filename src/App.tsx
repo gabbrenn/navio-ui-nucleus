@@ -22,7 +22,7 @@ function App() {
     <Router>
       <div className='flex bg-gray-100 min-h-screen'>
         <TypedSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className='flex-1 flex flex-col'>
+        <div className='flex-1 flex flex-col md:ml-64'>
           <Header setSidebarOpen={setSidebarOpen} />
           <main className='flex-1 p-4 md:p-6'>
             <Routes>

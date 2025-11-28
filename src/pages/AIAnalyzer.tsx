@@ -1,23 +1,33 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
+import { aiApi } from '@/lib/api/ai';
 
 export default function AIAnalyzer() {
   const [aiText, setAiText] = useState('');
-  const [analysisResult, setAnalysisResult] = useState('');
+  const [analysisResult, setAnalysisResult] = useState<{ result: string; riskLevel: string; confidenceScore?: number } | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleAnalyzeText = () => {
+  const handleAnalyzeText = async () => {
     if (!aiText.trim()) {
       toast.error('Please paste some text to analyze.');
       return;
     }
-    const results = [
-      'This message looks unsafe',
-      'Possible grooming behavior',
-      'High risk — do not respond',
-    ];
-    const randomResult = results[Math.floor(Math.random() * results.length)];
-    setAnalysisResult(randomResult);
-    toast.info('Analysis complete.');
+    setIsAnalyzing(true);
+    try {
+      const result = await aiApi.analyze(aiText);
+      setAnalysisResult({
+        result: result.analysis_result || 'Analysis complete.',
+        riskLevel: result.risk_level || 'unknown',
+        confidenceScore: result.confidence_score,
+      });
+      toast.info('Analysis complete.');
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze text. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -36,14 +46,32 @@ export default function AIAnalyzer() {
             />
             <button
               onClick={handleAnalyzeText}
-              className='w-full bg-secondary text-secondary-foreground font-semibold py-2 px-4 rounded-md hover:bg-secondary/90 transition-colors'
+              disabled={isAnalyzing}
+              className='w-full bg-secondary text-secondary-foreground font-semibold py-2 px-4 rounded-md hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              Analyze Text
+              {isAnalyzing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner className="w-4 h-4" />
+                  Analyzing...
+                </span>
+              ) : (
+                'Analyze Text'
+              )}
             </button>
             {analysisResult && (
-              <div className='p-4 border rounded-md bg-muted text-foreground'>
-                <p className='font-semibold'>Analysis Result:</p>
-                <p>{analysisResult}</p>
+              <div className={`p-4 border rounded-md ${
+                analysisResult.riskLevel === 'high' ? 'bg-red-50 border-red-200 dark:bg-red-900/20' :
+                analysisResult.riskLevel === 'medium' ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20' :
+                'bg-green-50 border-green-200 dark:bg-green-900/20'
+              }`}>
+                <p className='font-semibold mb-2'>Analysis Result:</p>
+                <p className='mb-2'>{analysisResult.result}</p>
+                <div className='text-sm text-muted-foreground'>
+                  <p>Risk Level: <span className='font-medium capitalize'>{analysisResult.riskLevel}</span></p>
+                  {analysisResult.confidenceScore && (
+                    <p>Confidence: {analysisResult.confidenceScore.toFixed(0)}%</p>
+                  )}
+                </div>
               </div>
             )}
           </div>

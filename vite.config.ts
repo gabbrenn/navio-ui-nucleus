@@ -16,6 +16,28 @@ export default defineConfig({
     checker({
       typescript: true,
     }),
+    // Custom plugin to add API routes
+    {
+      name: 'api-routes',
+      configureServer(server) {
+        // Import API routes and mount them
+        server.middlewares.use('/api', async (req, res, next) => {
+          try {
+            // Dynamically import the API app
+            const { createApiApp } = await import('./server.ts');
+            const apiApp = createApiApp();
+            apiApp(req, res, next);
+          } catch (error) {
+            console.error('API route error:', error);
+            if (!res.headersSent) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: 'Internal server error' }));
+            }
+          }
+        });
+      },
+    },
   ],
   server: {
     port: 3000,

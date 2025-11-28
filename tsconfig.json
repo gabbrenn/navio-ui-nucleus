@@ -2,7 +2,8 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.server.json" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
@@ -12,6 +13,6 @@
   },
   "exclude": [
     "node_modules",
-    "src/components/ui" // Add the directory you want to skip here
+    "src/components/ui"
   ]
 }

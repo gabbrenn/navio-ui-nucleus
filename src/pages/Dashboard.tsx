@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, UserCheck, ChevronRight, Star, Trophy, Target, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { quizApi } from '@/lib/api/quiz';
+import { toast } from 'sonner';
 
 // Quiz data structure
 const quizzes = [
@@ -447,10 +449,43 @@ export default function Dashboard() {
     setActiveQuiz(quiz);
   };
 
-  const handleQuizComplete = (results) => {
+  const handleQuizComplete = async (results: {
+    quizId: string;
+    score: number;
+    totalPoints: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    completionTime: number;
+    answers: unknown[];
+  }) => {
     const newPoints = results.score;
     const wasPerfect = results.score === results.totalPoints;
     const accuracy = Math.round((results.correctAnswers / results.totalQuestions) * 100);
+    
+    // Get user ID
+    const userId = localStorage.getItem('user_id') || 'anonymous_' + Date.now();
+    if (!localStorage.getItem('user_id')) {
+      localStorage.setItem('user_id', userId);
+    }
+
+    // Save quiz result to API
+    try {
+      const quiz = quizzes.find(q => q.id === results.quizId);
+      await quizApi.submitResult({
+        user_id: userId,
+        quiz_id: results.quizId,
+        quiz_title: quiz?.title,
+        score: results.score,
+        total_points: results.totalPoints,
+        correct_answers: results.correctAnswers,
+        total_questions: results.totalQuestions,
+        completion_time: results.completionTime,
+        answers: results.answers,
+      });
+    } catch (error) {
+      console.error('Failed to save quiz result:', error);
+      toast.error('Failed to save quiz result, but your progress is still tracked locally.');
+    }
     
     setUserStats(prev => ({
       ...prev,

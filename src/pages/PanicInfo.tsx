@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { panicApi } from '@/lib/api/panic';
 
 const PanicInfo = () => {
   const [emergencyHotline, setEmergencyHotline] = useState('');
@@ -12,6 +14,8 @@ const PanicInfo = () => {
   const [legalSupport, setLegalSupport] = useState('');
   const [digitalViolenceHelpline, setDigitalViolenceHelpline] = useState('');
   const [isSendingAlert, setIsSendingAlert] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingPermanent, setIsSavingPermanent] = useState(false);
   
   // New permanent fields
   const [fullName, setFullName] = useState('');
@@ -50,37 +54,117 @@ const PanicInfo = () => {
     }
   }, []);
 
-  const handleSave = () => {
-    const panicInfo = {
-      emergencyHotline,
-      trustedFriend,
-      legalSupport,
-      digitalViolenceHelpline,
-    };
-    localStorage.setItem('panicInfo', JSON.stringify(panicInfo));
-    toast.success('Panic information saved locally. You can access it even when offline.');
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      // Get user ID from localStorage or generate a temporary one
+      const userId = localStorage.getItem('user_id') || 'anonymous_' + Date.now();
+      if (!localStorage.getItem('user_id')) {
+        localStorage.setItem('user_id', userId);
+      }
+
+      await panicApi.upsert({
+        user_id: userId,
+        emergency_hotline: emergencyHotline || undefined,
+        trusted_friend: trustedFriend || undefined,
+        legal_support: legalSupport || undefined,
+        digital_violence_helpline: digitalViolenceHelpline || undefined,
+        full_name: fullName || undefined,
+        id_number: idNumber || undefined,
+        blood_type: bloodType || undefined,
+        medical_conditions: medicalConditions || undefined,
+        emergency_contact_name: emergencyContactName || undefined,
+        emergency_contact_relation: emergencyContactRelation || undefined,
+        emergency_contact_phone: emergencyContactPhone || undefined,
+      });
+
+      // Also save to localStorage as backup
+      const panicInfo = {
+        emergencyHotline,
+        trustedFriend,
+        legalSupport,
+        digitalViolenceHelpline,
+      };
+      localStorage.setItem('panicInfo', JSON.stringify(panicInfo));
+      toast.success('Panic information saved successfully.');
+    } catch (error) {
+      console.error('Save panic info error:', error);
+      // Fallback to localStorage only
+      const panicInfo = {
+        emergencyHotline,
+        trustedFriend,
+        legalSupport,
+        digitalViolenceHelpline,
+      };
+      localStorage.setItem('panicInfo', JSON.stringify(panicInfo));
+      toast.warning('Saved locally. API connection failed.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSavePermanentDetails = () => {
+  const handleSavePermanentDetails = async () => {
     // Validate required fields
     if (!fullName || !idNumber || !bloodType) {
       toast.error('Please fill in all required permanent details (Full Name, ID Number, Blood Type)');
       return;
     }
     
-    const permanentDetails = {
-      fullName,
-      idNumber,
-      bloodType,
-      medicalConditions,
-      emergencyContactName,
-      emergencyContactRelation,
-      emergencyContactPhone,
-    };
-    
-    localStorage.setItem('permanentPanicInfo', JSON.stringify(permanentDetails));
-    setPermanentDetailsSaved(true);
-    toast.success('Permanent details saved successfully. These details cannot be changed.');
+    if (isSavingPermanent) return;
+    setIsSavingPermanent(true);
+    try {
+      const userId = localStorage.getItem('user_id') || 'anonymous_' + Date.now();
+      if (!localStorage.getItem('user_id')) {
+        localStorage.setItem('user_id', userId);
+      }
+
+      await panicApi.upsert({
+        user_id: userId,
+        full_name: fullName,
+        id_number: idNumber,
+        blood_type: bloodType,
+        medical_conditions: medicalConditions || undefined,
+        emergency_contact_name: emergencyContactName || undefined,
+        emergency_contact_relation: emergencyContactRelation || undefined,
+        emergency_contact_phone: emergencyContactPhone || undefined,
+        emergency_hotline: emergencyHotline || undefined,
+        trusted_friend: trustedFriend || undefined,
+        legal_support: legalSupport || undefined,
+        digital_violence_helpline: digitalViolenceHelpline || undefined,
+      });
+
+      // Also save to localStorage as backup
+      const permanentDetails = {
+        fullName,
+        idNumber,
+        bloodType,
+        medicalConditions,
+        emergencyContactName,
+        emergencyContactRelation,
+        emergencyContactPhone,
+      };
+      localStorage.setItem('permanentPanicInfo', JSON.stringify(permanentDetails));
+      setPermanentDetailsSaved(true);
+      toast.success('Permanent details saved successfully.');
+    } catch (error) {
+      console.error('Save permanent details error:', error);
+      // Fallback to localStorage only
+      const permanentDetails = {
+        fullName,
+        idNumber,
+        bloodType,
+        medicalConditions,
+        emergencyContactName,
+        emergencyContactRelation,
+        emergencyContactPhone,
+      };
+      localStorage.setItem('permanentPanicInfo', JSON.stringify(permanentDetails));
+      setPermanentDetailsSaved(true);
+      toast.warning('Saved locally. API connection failed.');
+    } finally {
+      setIsSavingPermanent(false);
+    }
   };
 
   const resetPermanentDetails = () => {
@@ -294,8 +378,19 @@ This is an automated message from your safety application. Please respond immedi
               </AlertDescription>
             </Alert>
             
-            <Button onClick={handleSavePermanentDetails} className='w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg'>
-              Save Permanent Details
+            <Button 
+              onClick={handleSavePermanentDetails} 
+              disabled={isSavingPermanent}
+              className='w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {isSavingPermanent ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner className="w-4 h-4" />
+                  Saving...
+                </span>
+              ) : (
+                'Save Permanent Details'
+              )}
             </Button>
           </div>
         ) : (
@@ -420,21 +515,32 @@ This is an automated message from your safety application. Please respond immedi
           className='w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
         >
           {isSendingAlert ? (
-            <>
-              <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+            <span className="flex items-center justify-center gap-2">
+              <Spinner className="w-4 h-4" />
               Sending Alert...
-            </>
+            </span>
           ) : (
-            <>
-              <AlertTriangle className='w-4 h-4 mr-2' />
+            <span className="flex items-center justify-center gap-2">
+              <AlertTriangle className='w-4 h-4' />
               Send Emergency Alert
-            </>
+            </span>
           )}
         </Button>
       </div>
       
-      <Button onClick={handleSave} className='mt-4 w-full'>
-        Save Information
+      <Button 
+        onClick={handleSave} 
+        disabled={isSaving}
+        className='mt-4 w-full disabled:opacity-50 disabled:cursor-not-allowed'
+      >
+        {isSaving ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner className="w-4 h-4" />
+            Saving...
+          </span>
+        ) : (
+          'Save Information'
+        )}
       </Button>
     </div>
   );
